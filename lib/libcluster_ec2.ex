@@ -1,6 +1,5 @@
 defmodule ClusterEC2 do
   @moduledoc File.read!("#{__DIR__}/../README.md")
-  @tesla_adapter Application.get_env(:tesla, :adapter)
   @base_url "http://169.254.169.254/latest/meta-data"
 
   @doc """
@@ -8,7 +7,7 @@ defmodule ClusterEC2 do
   """
   @spec local_instance_id() :: binary()
   def local_instance_id do
-    case Tesla.get(http(), "/instance-id/") do
+    case Finch.request(http("/instance-id/"), ClusterEC2) do
       {:ok, %{status: 200, body: body}} -> body
       _ -> ""
     end
@@ -19,15 +18,11 @@ defmodule ClusterEC2 do
   """
   @spec instance_region() :: binary()
   def instance_region do
-    case Tesla.get(http(), "/placement/availability-zone/") do
+    case Finch.request(http("/placement/availability-zone/"), ClusterEC2) do
       {:ok, %{status: 200, body: body}} -> String.slice(body, 0..-2)
       _ -> ""
     end
   end
 
-  defp http() do
-    adapter = {@tesla_adapter, [recv_timeout: 120_000]}
-    options = [{Tesla.Middleware.BaseUrl, @base_url}]
-    Tesla.client(options, adapter)
-  end
+  defp http(path), do: Finch.build(:get, @base_url <> path)
 end

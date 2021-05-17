@@ -43,8 +43,8 @@ defmodule ClusterEC2.Strategy.Tags do
   @default_polling_interval 5_000
 
   def start_link(opts) do
-    Application.ensure_all_started(:tesla)
     Application.ensure_all_started(:ex_aws)
+    Finch.start_link(name: ClusterEC2)
     GenServer.start_link(__MODULE__, opts)
   end
 

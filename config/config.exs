@@ -42,12 +42,10 @@ config :libcluster,
     ]
   ]
 
-config :tesla, adapter: Tesla.Adapter.Hackney
+config :ex_aws, http_client: ClusterEC2.ExAwsFinch
 
 if Mix.env() == :test do
   config :ex_aws,
     access_key_id: "xxx",
     secret_access_key: "xxx"
-
-  config :tesla, adapter: Tesla.Mock
 end

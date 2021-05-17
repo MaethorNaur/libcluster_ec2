@@ -1,18 +1,21 @@
 defmodule ClusterEC2Test do
   use ExUnit.Case
+  import Mock
   doctest ClusterEC2
 
-  setup do
-    Tesla.Mock.mock(fn
-      %{method: :get, url: "http://169.254.169.254/latest/meta-data/instance-id/"} ->
-        %Tesla.Env{status: 200, body: "i-0fdde7ca9faef9751"}
+  setup_with_mocks [
+    {Finch, [:passthrough],
+     request: fn
+       %{host: "169.254.169.254", path: "/latest/meta-data/instance-id/"}, _ ->
+         {:ok, %Finch.Response{status: 200, body: "i-0fdde7ca9faef9751"}}
 
-      %{method: :get, url: "http://169.254.169.254/latest/meta-data/placement/availability-zone/"} ->
-        %Tesla.Env{status: 200, body: "eu-central-1b"}
-    end)
-
+       %{host: "169.254.169.254", path: "/latest/meta-data/placement/availability-zone/"}, _ ->
+         {:ok, %Finch.Response{status: 200, body: "eu-central-1b"}}
+     end}
+  ] do
     :ok
   end
+
 
   test "return local_instance_id" do
     assert "i-0fdde7ca9faef9751" == ClusterEC2.local_instance_id()

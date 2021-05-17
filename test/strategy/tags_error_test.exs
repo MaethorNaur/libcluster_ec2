@@ -2,16 +2,19 @@ defmodule Strategy.TagsErrorTest do
   use ExUnit.Case, async: false
   doctest ClusterEC2
 
-  setup do
-    Tesla.Mock.mock_global(fn
-      %{method: :get, url: "http://169.254.169.254/latest/meta-data/instance-id/"} ->
-        %Tesla.Env{status: 200, body: ""}
+  import Mock
 
-      %{method: :get, url: "http://169.254.169.254/latest/meta-data/placement/availability-zone/"} ->
-        %Tesla.Env{status: 200, body: ""}
-    end)
+  setup_with_mocks [
+    {Finch, [:passthrough],
+     request: fn
+       %{host: "169.254.169.254", path: "/latest/meta-data/instance-id/"}, _ ->
+         {:ok, %Finch.Response{status: 200, body: ""}}
 
-    ops = [
+       %{host: "169.254.169.254", path: "/latest/meta-data/placement/availability-zone/"}, _ ->
+         {:ok, %Finch.Response{status: 200, body: ""}}
+     end}
+  ] do
+    ops = [%Cluster.Strategy.State{
       topology: ClusterEC2.Strategy.Tags,
       connect: {:net_kernel, :connect, []},
       disconnect: {:net_kernel, :disconnect, []},
@@ -19,7 +22,7 @@ defmodule Strategy.TagsErrorTest do
       config: [
         ec2_tagname: "elasticbeanstalk:environment-name"
       ]
-    ]
+    }]
 
     {:ok, server_pid} = ClusterEC2.Strategy.Tags.start_link(ops)
     {:ok, server: server_pid}
